@@ -1,6 +1,6 @@
 # Stock Portfolio Optimizer & Sentiment Tracker
 
-A dynamic, data-driven application that blends Modern Portfolio Theory (MPT) and News Sentiment Analysis using a Python data pipeline and Power BI interactive dashboards.
+A dynamic, data-driven application that blends Modern Portfolio Theory (MPT) and News Sentiment Analysis using a Python data pipeline and Tableau interactive dashboards.
 
 ## System Architecture
 
@@ -12,7 +12,7 @@ graph TD
     B -->|sentiment_analyzer.py| E[(news_sentiment.csv)]
     B -->|portfolio_optimizer.py| F[(portfolio_metrics.csv)]
     B -->|portfolio_optimizer.py| G[(efficient_frontier.csv)]
-    D & E & F & G -->|Import CSVs| H[Power BI Dashboard]
+    D & E & F & G -->|Import CSVs| H[Tableau Dashboard]
 ```
 
 ---
@@ -41,79 +41,50 @@ This script dynamically calculates dates for the past 2 years and outputs four f
 
 ---
 
-## Power BI Dashboard Implementation Guide
+## Tableau Dashboard Implementation Guide
 
 Follow these steps to build an interactive, premium-grade dashboard.
 
-### STEP 1: Import the Data
-1. Open **Power BI Desktop**.
-2. Click **Get Data** -> **Text/CSV**.
-3. Select and load each of the four CSV files from the `data/` folder:
-   - `efficient_frontier.csv`
-   - `news_sentiment.csv`
-   - `portfolio_metrics.csv`
-   - `stock_prices.csv`
+### STEP 1: Connect Your Data Sources
+1. Open **Tableau**.
+2. Under **Connect**, click **Text File** and select `stock_prices.csv` from the `data/` folder.
+3. In the canvas area, drag `portfolio_metrics.csv` and `news_sentiment.csv` next to `stock_prices.csv`.
+   * Tableau will automatically create logical relationships (represented by "noodles") linking them via the **`Ticker`** field.
+4. Go to the top menu, select **Data** ➔ **New Data Source**, choose **Text File**, and load `efficient_frontier.csv` as a separate standalone table.
 
-### STEP 2: Configure the Data Model (Relationships)
-Go to the **Model View** in Power BI and configure the relationships:
-1. Connect `portfolio_metrics` to `stock_prices`:
-   * **Relationship:** `portfolio_metrics(Ticker)` to `stock_prices(Ticker)`
-   * **Cardinality:** Many-to-Many (or One-to-Many if you build a unique Tickers master table).
-2. Connect `news_sentiment` to `stock_prices`:
-   * **Relationship:** `news_sentiment(Ticker)` to `stock_prices(Ticker)`
-3. Keep `efficient_frontier` standalone as it represents simulated macro portfolios.
+### STEP 2: Designing the Sheets
 
----
+#### Sheet 1: Efficient Frontier (Scatter Plot)
+* **Data Source:** Select `efficient_frontier`.
+* **Setup:**
+  1. Drag `Volatility` to **Columns**.
+  2. Drag `Expected Return` to **Rows**.
+  3. Go to the top menu bar, click **Analysis**, and **uncheck** **Aggregate Measures**.
+  4. Drag `Simulated Portfolio ID` to **Detail** on the Marks card.
+  5. Drag `Sharpe Ratio` to **Color** on the Marks card.
+  6. Edit colors and choose a diverging gradient (e.g., *Red-Blue Diverging* or *Orange-Blue Diverging*).
 
-### STEP 3: Designing the Visual Pages
+#### Sheet 2: Optimal Asset Allocations (Donut/Bar Chart)
+* **Data Source:** Select `portfolio_metrics`.
+* **Setup:**
+  1. Drag `Ticker` to **Columns**.
+  2. Drag `Weight` to **Rows** (set aggregation to `SUM`).
+  3. Drag `Portfolio Type` to the **Filters** card. 
+     * Right-click `Portfolio Type` in filters and select **Show Filter**.
+     * Change the filter type to **Single Value (List)**.
 
-#### Page 1: Portfolio Optimization & Efficient Frontier
-Make this page look premium (dark background with vibrant gradient theme recommended).
-* **Efficient Frontier Scatter Chart:**
-  * **Visual Type:** Scatter Chart
-  * **X-Axis:** `Volatility` (Don't summarize)
-  * **Y-Axis:** `Expected_Return` (Don't summarize)
-  * **Values (Details):** `Simulated_Portfolio_ID`
-  * **Legend/Color By:** `Sharpe_Ratio`
-  * *Insight:* This plots the classic "Efficient Frontier" curve where the top boundary represents the best return for a given risk level.
-* **Optimal Allocation Donut Chart:**
-  * **Visual Type:** Donut Chart
-  * **Legend:** `Ticker`
-  * **Values:** `Weight`
-  * **Slicer:** Add a Slicer for `Portfolio_Type` (e.g. filter by "Max Sharpe" or "Min Volatility" to see weights change dynamically).
-* **Portfolio Metrics Cards:**
-  * Use card visuals to show:
-    * `Portfolio_Return` (Formula: `AVERAGE(Portfolio_Return)`)
-    * `Portfolio_Volatility` (Formula: `AVERAGE(Portfolio_Volatility)`)
-    * `Portfolio_Sharpe` (Formula: `AVERAGE(Portfolio_Sharpe)`)
+#### Sheet 3: News Sentiment Distribution
+* **Data Source:** Select `news_sentiment`.
+* **Setup:**
+  1. Drag `Ticker` to **Rows**.
+  2. Drag `Sentiment Label` to **Columns**.
+  3. Drag `news_sentiment.csv (Count)` to **Columns** next to `Sentiment Label`.
+  4. Drag `Sentiment Label` to **Color** in the Marks card.
+     * Map colors: `Positive` = Green, `Neutral` = Gray, `Negative` = Red.
 
-#### Page 2: News Sentiment Tracker
-Analyze recent events and news indicators affecting stock performance.
-* **Market Sentiment Gauge:**
-  * Create a DAX measure:
-    ```dax
-    Average Sentiment = AVERAGE(news_sentiment[Sentiment_Score])
-    ```
-  * Add a **Gauge Visual** using `Average Sentiment` (Target value: `1.0`, Minimum: `-1.0`, Maximum: `1.0`).
-* **Sentiment Distribution Bar Chart:**
-  * **Visual Type:** Stacked Bar Chart
-  * **Y-Axis:** `Ticker`
-  * **X-Axis:** Count of `Headline`
-  * **Legend:** `Sentiment_Label` (Positive = Green, Neutral = Gray, Negative = Red)
-* **Headline News Table:**
-  * **Columns:** `Date`, `Ticker`, `Headline`, `Sentiment_Score`, `Link`
-  * *Pro Tip:* Go to the `Link` column properties and set **Data Category** to **Web URL** to make the headlines clickable.
-
-#### Page 3: Asset Comparison & Trends
-Overlay sentiment trends with price trends.
-* **Return vs. Volatility Scatter Chart:**
-  * **Visual Type:** Scatter Chart (for individual assets)
-  * **Filter:** Set filter where `Portfolio_Type` starts with `Asset:`
-  * **X-Axis:** `Portfolio_Volatility`
-  * **Y-Axis:** `Portfolio_Return`
-  * **Values (Details):** `Portfolio_Type` (Individual assets)
-* **Price History Line Chart:**
-  * **Visual Type:** Line Chart
-  * **X-Axis:** `Date`
-  * **Y-Axis:** `Close`
-  * **Legend:** `Ticker`
+### STEP 3: Assemble the Dashboard
+1. Click the **New Dashboard** icon at the bottom.
+2. In the left panel under Dashboard, change the **Size** to **Automatic** so it resizes nicely.
+3. Drag **Sheet 1 (Efficient Frontier)** and **Sheet 2 (Asset Allocations)** side-by-side at the top.
+4. Drag **Sheet 3 (Sentiment)** to the bottom.
+5. Select the Sentiment chart, and click the **Use as Filter** funnel icon in its top-right panel to enable cross-chart filtering.
