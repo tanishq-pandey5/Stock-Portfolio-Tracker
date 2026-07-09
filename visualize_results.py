@@ -1,7 +1,11 @@
 import os
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')  # Headless backend for background runs
+
+# Use interactive backend on your Mac, fall back to headless 'Agg' in background environments
+if os.environ.get('DISPLAY') is None and os.environ.get('TERM_PROGRAM') is None:
+    matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 
